@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Riwayat & Materi Pelatihan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Library SDK Supabase Cloud -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+
+  <!-- ==================== 1. HALAMAN LOGIN ==================== -->
+  <div id="loginView" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">🎓</div>
+        <h2 class="text-2xl font-bold text-gray-800">Masuk ke Portal Cloud</h2>
+        <p class="text-sm text-gray-500 mt-1">Masukkan Email & Password Supabase Anda</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+          <input type="email" id="loginEmail" placeholder="admin@email.com" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition">
+          Masuk Sekarang
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ==================== 2. DASHBOARD UTAMA ==================== -->
+  <div id="dashboardView" class="hidden min-h-screen flex flex-col">
+    <header class="bg-indigo-600 text-white shadow-md">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div>
+          <h1 class="text-xl md:text-2xl font-bold">Portal Database Cloud Pelatihan</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="openAddModal()" class="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg text-sm shadow">
+            + Tambah Pelatihan
+          </button>
+          <button onclick="handleLogout()" class="bg-indigo-800 hover:bg-indigo-900 text-white px-3 py-2 rounded-lg text-sm">
+            Keluar 🚪
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
+      <!-- Filter Bar -->
+      <div class="bg-white p-4 rounded-xl shadow mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
+        <input type="text" id="searchInput" onkeyup="filterData()" placeholder="Cari pelatihan atau materi..." class="w-full md:w-1/2 p-2 border border-gray-300 rounded-lg">
+      </div>
+
+      <!-- Ringkasan Statistik -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-indigo-500">
+          <h3 class="text-gray-500 text-sm font-medium">Total Pelatihan</h3>
+          <p id="totalTraining" class="text-3xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-green-500">
+          <h3 class="text-gray-500 text-sm font-medium">Sertifikat Diperoleh</h3>
+          <p id="totalCertificates" class="text-3xl font-bold text-gray-800">0</p>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow border-l-4 border-yellow-500">
+          <h3 class="text-gray-500 text-sm font-medium">Total Jam Belajar</h3>
+          <p id="totalHours" class="text-3xl font-bold text-gray-800">0 Jam</p>
+        </div>
+      </div>
+
+      <!-- Tabel -->
+      <div class="bg-white rounded-xl shadow overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-50 border-b text-gray-600 text-sm uppercase">
+              <th class="p-4">Nama Pelatihan</th>
+              <th class="p-4">Penyelenggara</th>
+              <th class="p-4">Kategori</th>
+              <th class="p-4">Tgl Selesai</th>
+              <th class="p-4">Durasi</th>
+              <th class="p-4 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="trainingTableBody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+
+  <!-- ==================== 3. MODAL TAMBAH PELATIKAN ==================== -->
+  <div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="bg-green-600 text-white p-4 flex justify-between items-center">
+        <h2 class="text-lg font-bold">Tambah Data ke Cloud</h2>
+        <button onclick="closeAddModal()" class="text-2xl">&times;</button>
+      </div>
+      <form onsubmit="handleAddTraining(event)" class="p-6 overflow-y-auto space-y-4 flex-1">
+        <input type="text" id="addTitle" placeholder="Judul Pelatihan" required class="w-full p-2 border rounded">
+        <input type="text" id="addProvider" placeholder="Penyelenggara" required class="w-full p-2 border rounded">
+        <select id="addCategory" class="w-full p-2 border rounded">
+          <option value="Web Development">Web Development</option>
+          <option value="Data Science">Data Science</option>
+          <option value="UI/UX Design">UI/UX Design</option>
+        </select>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="date" id="addDate" required class="w-full p-2 border rounded">
+          <input type="number" id="addHours" placeholder="Durasi (Jam)" required class="w-full p-2 border rounded">
+        </div>
+        <input type="url" id="addCertUrl" placeholder="URL Sertifikat (https://...)" class="w-full p-2 border rounded">
+
+        <!-- Input Materi -->
+        <div class="pt-2 border-t">
+          <div class="flex justify-between mb-2">
+            <span class="text-xs font-bold uppercase">Input Materi</span>
+            <button type="button" onclick="addMaterialField()" class="text-xs text-indigo-600 font-bold">+ Tambah Modul</button>
+          </div>
+          <div id="materialInputsContainer" class="space-y-2">
+            <div class="flex gap-2">
+              <input type="text" placeholder="Judul Modul" class="mat-title w-2/3 p-2 text-xs border rounded" required>
+              <input type="text" placeholder="Durasi Modul" class="mat-duration w-1/3 p-2 text-xs border rounded" required>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded font-bold">Simpan ke Cloud Database</button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ==================== 4. MODAL MATERI ==================== -->
+  <div id="materiModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex justify-center items-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-xl w-full p-6">
+      <h2 id="modalTitle" class="text-xl font-bold mb-2"></h2>
+      <div id="materiList" class="space-y-2 mb-4"></div>
+      <button onclick="closeModal()" class="bg-gray-500 text-white px-4 py-2 rounded">Tutup</button>
+    </div>
+  </div>
+
+
+  <!-- ==================== LOGIKA CLOUD (SUPABASE INTEGRATION) ==================== -->
+  <script>
+    // ⚠️ GANTI DUA VARIABLE DI BAWAH DENGAN DATA DARI SUPABASE KAMU!
+    const SUPABASE_URL = "https://yipnolykowpvibntwwmk.supabase.co/rest/v1/";
+    const SUPABASE_KEY = "sb_publishable_9sdju8oPEH8WS8mgzQP-0w_6BSqP-V2";
+    
+    // Inisialisasi Supabase SDK
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let trainings = [];
+
+    // 1. LOGIN
+    async function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert("Login Gagal: " + error.message);
+      } else {
+        document.getElementById("loginView").classList.add("hidden");
+        document.getElementById("dashboardView").classList.remove("hidden");
+        fetchDataFromCloud();
+      }
+    }
+
+    // 2. LOGOUT
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
+      document.getElementById("dashboardView").classList.add("hidden");
+      document.getElementById("loginView").classList.remove("hidden");
+    }
+
+    // 3. AMBIL DATA DARI CLOUD (GET)
+    async function fetchDataFromCloud() {
+      const { data, error } = await supabaseClient.from('trainings').select('*').order('id', { ascending: false });
+      if (error) {
+        alert("Gagal ambil data cloud: " + error.message);
+      } else {
+        trainings = data;
+        renderTable(trainings);
+      }
+    }
+
+    // 4. SIMPAN DATA BARU KE CLOUD (POST)
+    async function handleAddTraining(event) {
+      event.preventDefault();
+      
+      const titles = document.querySelectorAll(".mat-title");
+      const durations = document.querySelectorAll(".mat-duration");
+      const materials = [];
+      titles.forEach((input, i) => {
+        materials.push({ judul: input.value, durasi: durations[i].value });
+      });
+
+      const payload = {
+        title: document.getElementById("addTitle").value,
+        provider: document.getElementById("addProvider").value,
+        category: document.getElementById("addCategory").value,
+        date: document.getElementById("addDate").value,
+        hours: Number(document.getElementById("addHours").value),
+        certUrl: document.getElementById("addCertUrl").value,
+        materials: materials
+      };
+
+      const { error } = await supabaseClient.from('trainings').insert([payload]);
+
+      if (error) {
+        alert("Gagal simpan data: " + error.message);
+      } else {
+        alert("Berhasil simpan ke Cloud Database!");
+        closeAddModal();
+        fetchDataFromCloud();
+      }
+    }
+
+    // 5. HELPER RENDER KODE
+    function renderTable(data) {
+      const tbody = document.getElementById("trainingTableBody");
+      tbody.innerHTML = "";
+      data.forEach(item => {
+        tbody.innerHTML += `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="p-4 font-bold">${item.title}</td>
+            <td class="p-4">${item.provider}</td>
+            <td class="p-4">${item.category}</td>
+            <td class="p-4">${item.date}</td>
+            <td class="p-4">${item.hours} Jam</td>
+            <td class="p-4 text-center">
+              <button onclick="openMateriModal(${item.id})" class="bg-indigo-600 text-white text-xs px-2 py-1 rounded">📚 Materi (${item.materials ? item.materials.length : 0})</button>
+              <a href="${item.certUrl}" target="_blank" class="border border-green-600 text-green-600 text-xs px-2 py-1 rounded ml-1">🎓 Sertifikat</a>
+            </td>
+          </tr>
+        `;
+      });
+      document.getElementById("totalTraining").innerText = data.length;
+      document.getElementById("totalCertificates").innerText = data.filter(d => d.certUrl).length;
+      document.getElementById("totalHours").innerText = data.reduce((a, b) => a + Number(b.hours), 0) + " Jam";
+    }
+
+    function openAddModal() { document.getElementById("addModal").classList.remove("hidden"); }
+    function closeAddModal() { document.getElementById("addModal").classList.add("hidden"); }
+    function addMaterialField() {
+      document.getElementById("materialInputsContainer").innerHTML += `
+        <div class="flex gap-2">
+          <input type="text" placeholder="Judul Modul" class="mat-title w-2/3 p-2 text-xs border rounded" required>
+          <input type="text" placeholder="Durasi Modul" class="mat-duration w-1/3 p-2 text-xs border rounded" required>
+        </div>`;
+    }
+    function openMateriModal(id) {
+      const item = trainings.find(t => t.id === id);
+      document.getElementById("modalTitle").innerText = item.title;
+      const list = document.getElementById("materiList");
+      list.innerHTML = "";
+      item.materials.forEach(m => {
+        list.innerHTML += `<div class="p-2 border rounded text-sm font-semibold flex justify-between"><span>${m.judul}</span><span class="text-xs bg-gray-200 p-1 rounded">${m.durasi}</span></div>`;
+      });
+      document.getElementById("materiModal").classList.remove("hidden");
+    }
+    function closeModal() { document.getElementById("materiModal").classList.add("hidden"); }
+  </script>
+</body>
+</html>
