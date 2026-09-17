@@ -113,7 +113,7 @@
           <input type="date" id="addDate" required class="w-full p-2 border rounded">
           <input type="number" id="addHours" placeholder="Durasi (Jam)" required class="w-full p-2 border rounded">
         </div>
-        <input type="url" id="addCertUrl" placeholder="URL Sertifikat (https://...)" class="w-full p-2 border rounded">
+        <input type="url" id="addcerturl" placeholder="URL Sertifikat (https://...)" class="w-full p-2 border rounded">
 
         <!-- Input Materi -->
         <div class="pt-2 border-t">
@@ -202,14 +202,15 @@
         materials.push({ judul: input.value, durasi: durations[i].value });
       });
 
-      const payload = {
+    const payload = {
         title: document.getElementById("addTitle").value,
         provider: document.getElementById("addProvider").value,
         category: document.getElementById("addCategory").value,
         date: document.getElementById("addDate").value,
         hours: Number(document.getElementById("addHours").value),
-        certUrl: document.getElementById("addCertUrl").value,
+        certurl: document.getElementById("addcerturl").value, // 👈 GANTI 'certUrl' JADI 'certurl'
         materials: materials
+      };
       };
 
       const { error } = await supabaseClient.from('trainings').insert([payload]);
@@ -237,13 +238,13 @@
             <td class="p-4">${item.hours} Jam</td>
             <td class="p-4 text-center">
               <button onclick="openMateriModal(${item.id})" class="bg-indigo-600 text-white text-xs px-2 py-1 rounded">📚 Materi (${item.materials ? item.materials.length : 0})</button>
-              <a href="${item.certUrl}" target="_blank" class="border border-green-600 text-green-600 text-xs px-2 py-1 rounded ml-1">🎓 Sertifikat</a>
+              <a href="${item.certurl}" target="_blank" class="border border-green-600 text-green-600 text-xs px-2 py-1 rounded ml-1">🎓 Sertifikat</a>
             </td>
           </tr>
         `;
       });
       document.getElementById("totalTraining").innerText = data.length;
-      document.getElementById("totalCertificates").innerText = data.filter(d => d.certUrl).length;
+      document.getElementById("totalCertificates").innerText = data.filter(d => d.certurl).length;
       document.getElementById("totalHours").innerText = data.reduce((a, b) => a + Number(b.hours), 0) + " Jam";
     }
 
